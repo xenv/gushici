@@ -27,7 +27,7 @@
     1. 服务器运行 `java -server -jar yiyan-1.0-fat.jar -conf conf.json`  conf.json从下面可以复制出来自己配
     2. IDE运行 启动类 `io.vertx.core.Launcher` 参数 `run ma.luan.yiyan.MainVerticle -conf src/main/resources/conf.json`
         
-5. 如果要自行采集数据，请仿照原有 redis 中的 key 格式采集，log自动添加，help为可选，需要自己创建 text 和 img 两个 key。古诗词数据每个分类一个 set，set的内容是 json。图片使用base64加密储存。其他细节请自行查看源码。
+5. 如果要自行采集数据，请仿照原有 redis 中的 key 格式采集，log自动添加，help为可选，需要自己填充 json 和 img 两个 key 集。古诗词数据每个分类一个 set，set的内容是 json 或者 base64 加密的图片。其他细节请自行查看源码。
 
 ### 使用
 
