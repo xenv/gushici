@@ -3,9 +3,10 @@ package ma.luan.yiyan.util;
 
 import io.vertx.core.Future;
 import io.vertx.core.buffer.Buffer;
-import java.util.Base64;
+import io.vertx.core.eventbus.ReplyException;
+import io.vertx.core.eventbus.ReplyFailure;
 
-import java.io.IOException;
+import java.util.Base64;
 
 public class ConvertUtil {
     /**
@@ -15,7 +16,7 @@ public class ConvertUtil {
     public static Future<Buffer> getImageFromBase64(String obj) {
         Future<Buffer> result = Future.future();
         if (obj == null) {
-            result.fail("图片读取失败");
+            result.fail(new ReplyException(ReplyFailure.RECIPIENT_FAILURE, 500, "图片读取失败"));
             return result;
         }
 

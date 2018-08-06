@@ -66,6 +66,7 @@ public class LogService extends AbstractVerticle {
                 message.reply(result);
             } else {
                 log.error(v.cause());
+                message.fail(500, v.cause().getMessage());
             }
         });
     }

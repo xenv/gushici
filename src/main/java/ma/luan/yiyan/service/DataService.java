@@ -4,11 +4,14 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.eventbus.Message;
+import io.vertx.core.eventbus.ReplyException;
+import io.vertx.core.eventbus.ReplyFailure;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.redis.RedisClient;
 import io.vertx.redis.RedisOptions;
 import ma.luan.yiyan.constants.Key;
+import ma.luan.yiyan.util.CategoryTrie;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -21,7 +24,7 @@ public class DataService extends AbstractVerticle {
     private Random random = new Random();
     private RedisOptions redisOptions;
     private Logger log = LogManager.getLogger(this.getClass());
-    private static List<String> keysInRedis;
+    private static CategoryTrie keysInRedis = new CategoryTrie();
 
     public DataService(RedisOptions redisOptions) {
         this.redisOptions = redisOptions;
@@ -37,12 +40,12 @@ public class DataService extends AbstractVerticle {
         Future<JsonArray> jsonKeys = Future.future(f -> redisClient.keys(Key.JSON, f));
         CompositeFuture.all(Arrays.asList(imgKeys, jsonKeys)).setHandler(v -> {
             if (v.succeeded()) {
-                keysInRedis = imgKeys.result().addAll(jsonKeys.result()).stream()
-                    .filter(String.class::isInstance)
-                    .map(String.class::cast)
-                    .collect(Collectors.toList());
+                imgKeys.result().addAll(jsonKeys.result())
+                        .stream()
+                        .forEach(key -> keysInRedis.insert((String) key));
                 startFuture.complete();
             } else {
+                log.error(v.cause());
                 startFuture.fail(v.cause());
             }
         });
@@ -66,46 +69,51 @@ public class DataService extends AbstractVerticle {
                 );
                 message.reply(newArray);
             } else {
-                message.reply(res.cause());
+                log.error(res.cause());
+                message.fail(500, res.cause().getMessage());
             }
         });
     }
 
+    /**
+     * @param message example: {format: "png", categories: [shenghuo, buyi]}
+     */
     private void getGushiciFromRedis(Message<JsonObject> message) {
-        String keyName = message.body().getJsonArray("classes").stream()
-            .filter(String.class::isInstance)
-            .map(String.class::cast)
-            .collect(Collectors.joining(":"));
-        keyName = ("png".equals(message.body().getString("format")) ? "img" : "json") + ":" + keyName;
-
-        checkAndGetKey(keyName)
+        JsonArray realCategory = new JsonArray()
+                .add("png".equals(message.body().getString("format")) ? "img" : "json")
+                .addAll(message.body().getJsonArray("categories"));
+        checkAndGetKey(realCategory)
             .compose(key -> Future.<String>future(s -> redisClient.srandmember(key, s))) // 从 set 随机返回一个对象
             .setHandler(res -> {
                 if (res.succeeded()) {
                     message.reply(res.result());
                 } else {
-                    message.fail(404, res.cause().getMessage());
+                    if (res.cause() instanceof ReplyException) {
+                        ReplyException exception = (ReplyException) res.cause();
+                        message.fail(exception.failureCode(), exception.getMessage());
+                    }
+                    message.fail(500, res.cause().getMessage());
                 }
             });
     }
 
     /**
-     * @param keys 用户请求的类别
+     * @param categories 用户请求的类别 [img, shenghuo ,buyi]
      * @return 返回一个随机类别的 key （set)
      */
-    private Future<String> checkAndGetKey(String keys) {
+    private Future<String> checkAndGetKey(JsonArray categories) {
         Future<String> result = Future.future();
-        // 这里可以改用多级 Map 减少随机选择范围，不过创建 Map 也要一些开销
-        List<String> toRandom = keysInRedis.stream()
-            .filter(key -> key.startsWith(keys))
-            .collect(Collectors.toList());
+        List<String> categoryList = categories.stream()
+                .filter(String.class::isInstance)
+                .map(String.class::cast)
+                .collect(Collectors.toList());
+        List<String> toRandom = keysInRedis.getKeys(categoryList);
         if (toRandom.size() >= 1) {
             result.complete(toRandom.get(random.nextInt(toRandom.size())));
         } else {
-            result.fail("404, 没有结果，请检查API");
+            result.fail(new ReplyException(ReplyFailure.RECIPIENT_FAILURE, 404, "没有结果，请检查API"));
         }
         return result;
-
     }
 }
 

@@ -1,9 +1,6 @@
 ## 一言·古诗词 API
 
-<div style="text-align:center">
 <img src="https://api.gushi.ci/all.svg">
-</div>
-
 
 ### 简介
 
@@ -89,9 +86,8 @@ JSON调用可以获取来源、作者、分类等信息，可以供你自定义�
   xhr.open('get', 'https://api.gushi.ci/all.txt');
   xhr.onreadystatechange = function () {
     if (xhr.readyState === 4) {
-      var data = JSON.parse(xhr.responseText);
       var gushici = document.getElementById('gushici');
-      gushici.innerText = data.content;
+      gushici.innerText = xhr.responseText;
     }
   };
   xhr.send();
@@ -112,10 +108,16 @@ TXT调用和JSON调用基本一致，可以节省一些流量。或者，你甚�
 4. ConvertUtil 负责转码
 5. Service 没有使用 Service Proxy，因此无需额外生成代码。
 
-### 待改进
+### 更新历史
 
-1. 错误处理
-2. 优化部分可能会阻塞的代码
+* 2018.08.06 1.1: 
+  1. 引入前缀树，使分类检索效率由 O(n) (n为所有分类数) 变为 O(L) (L为分类级数)。
+  缺点是空间复杂度由 O(n) 变为 O(nL)，代码复杂度增加60行
+  2. 优化了正则匹配获取地址参数的逻辑
+  3. 正确加入了全局的错误处理（包括 Router 和 EventBus）
+* 2018.08.05 1.0：初始版本，支持 4 种格式返回，支持按分类搜索 
+
+
 
 ### 关于项目
 

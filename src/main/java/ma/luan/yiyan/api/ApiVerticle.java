@@ -2,6 +2,8 @@ package ma.luan.yiyan.api;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
+import io.vertx.core.eventbus.ReplyException;
+import io.vertx.core.eventbus.ReplyFailure;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -14,11 +16,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Arrays;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class ApiVerticle extends AbstractVerticle {
-    private Logger log = LogManager.getLogger(this.getClass());
+    //private Logger log = LogManager.getLogger(this.getClass());
 
     @Override
     public void start(Future<Void> startFuture) {
@@ -26,12 +27,12 @@ public class ApiVerticle extends AbstractVerticle {
         router.route().handler(BodyHandler.create());
         router.get("/*").handler(this::log); // 全局日志处理，会执行 next() 到下一个
         router.get("/").handler(this::handleRoot); // 首页
-        router.get("/favicon.ico").handler(c -> returnError(c, new Exception("404"))); // 针对浏览器返回404
+        router.get("/favicon.ico").handler(c -> c.fail(404)); // 针对浏览器返回404
         router.get("/log").handler(this::showLog); // 显示日志
-        router.get("/*").handler(this::handleGushici); // 核心API调用
-        router.route().last().handler(c -> { // 其他返回 404 （应该不会走到这里）
-            returnError(c, new Exception("404"));
-        });
+        router.routeWithRegex("/([a-z0-9/]*)\\.?(txt|json|png|svg|)")
+                .handler(this::handleGushici); // 核心API调用
+        router.route().last().handler(c -> c.fail(404)) // 其他返回404
+                .failureHandler(this::returnError); // 对上面所有的错误进行处理
         vertx
             .createHttpServer()
             .requestHandler(router::accept)
@@ -58,25 +59,25 @@ public class ApiVerticle extends AbstractVerticle {
                 result.put("list", res.result().body());
                 returnJsonWithCache(routingContext, result);
             } else {
-                returnError(routingContext, res.cause());
+                routingContext.fail(res.cause());
             }
         });
     }
 
     private void handleGushici(RoutingContext routingContext) {
         // 这里有两层回调，因为第二层回调需要用到第一层回调的数据。
-        parseURI(routingContext.normalisedPath()) // 获取到 URI 上面的参数
+        parseURI(routingContext) // 获取到 URI 上面的参数
             .setHandler(params -> {
                 if (params.succeeded()) {
                     vertx.eventBus().<String>send(Key.GET_GUSHICI_FROM_REDIS, params.result(), res -> { // 从 Redis 拿数据
                         if (res.succeeded()) {
                             returnGushici(routingContext, res.result().body(), params.result());
                         } else {
-                            returnError(routingContext, res.cause());
+                            routingContext.fail(res.cause());
                         }
                     });
                 } else {
-                    returnError(routingContext, params.cause());
+                    routingContext.fail(params.cause());
                 }
             });
     }
@@ -86,7 +87,7 @@ public class ApiVerticle extends AbstractVerticle {
             if (res.succeeded()) {
                 returnJson(routingContext, res.result().body());
             } else {
-                returnError(routingContext, res.cause());
+                routingContext.fail(res.cause());
             }
         });
     }
@@ -104,15 +105,19 @@ public class ApiVerticle extends AbstractVerticle {
             .end(jsonObject.encodePrettily());
     }
 
-    private void returnError(RoutingContext routingContext, Throwable cause) {
+    private void returnError(RoutingContext routingContext) {
         JsonObject result = new JsonObject();
-        result.put("error", cause.getMessage());
-        int statusCode = cause.getMessage().startsWith("404") ? 404 : 500;
-        if (statusCode == 500) {
-            log.error(cause);
+        int errorCode = routingContext.statusCode() > 0 ? routingContext.statusCode() : 500;
+        // 不懂 Vert.x 为什么 EventBus 和 Web 是两套异常系统
+        if (routingContext.failure() instanceof ReplyException) {
+            errorCode = ((ReplyException) routingContext.failure()).failureCode();
+        }
+        result.put("error-code", errorCode);
+        if (routingContext.failure() != null) {
+            result.put("reason", routingContext.failure().getMessage());
         }
         setCommonHeader(routingContext.response()
-            .setStatusCode(statusCode)
+            .setStatusCode(errorCode)
             .putHeader("content-type", "application/json; charset=utf-8"))
             .end(result.encodePrettily());
     }
@@ -146,15 +151,14 @@ public class ApiVerticle extends AbstractVerticle {
                             .putHeader("Content-Length", res.result().length() + "")
                             .write(res.result()).end();
                     } else {
-                        returnError(routingContext, res.cause());
+                        routingContext.fail(res.cause());
                     }
                 });
                 break;
             }
             default:
-                returnError(routingContext, new Exception("参数错误"));
+                routingContext.fail(new ReplyException(ReplyFailure.RECIPIENT_FAILURE, 400, "参数错误"));
         }
-
     }
 
     private HttpServerResponse setCommonHeader(HttpServerResponse response) {
@@ -173,55 +177,26 @@ public class ApiVerticle extends AbstractVerticle {
 
     /**
      * 根据 uri 获取参数
-     *
-     * @param uri 例如：/shenghuo/buyi.png, /all
-     * @return {format: "png", classes: [shenghuo, buyi]}, {format:"json", classes:[""]}
+     * @param routingContext example: uri: /shenghuo/buyi.png , /all
+     * @return {format: "png", categories: [shenghuo, buyi]}, {format:"json", categories:[""]}
      */
-    private Future<JsonObject> parseURI(String uri) {
+    private Future<JsonObject> parseURI(RoutingContext routingContext) {
         Future<JsonObject> result = Future.future();
-        if (uri.length() > 100) {
-            result.fail(new IllegalArgumentException("参数太长了，别玩了"));
-            return result;
-        }
+
+        String rawCategory = routingContext.request().getParam("param0");
+        String rawFormat = routingContext.request().getParam("param1");
+        // 如果是 "all" 则当没有分类处理
+        JsonArray categories = new JsonArray(
+                Arrays.stream(rawCategory.split("/"))
+                .filter(s -> !s.isEmpty())
+                .filter(s -> !"all".equals(s))
+                .collect(Collectors.toList()));
+        // 默认 json
+        String format = "".equals(rawFormat) ? "json" : rawFormat;
 
         JsonObject pathParams = new JsonObject();
-
-        String rawClasses;
-        String rawFormat = "";
-
-        if (uri.contains(".")) {
-            Pattern pattern = Pattern.compile("/(.*)\\.(.*)");
-            Matcher m = pattern.matcher(uri);
-            if (!m.find()) {
-                result.fail(new IllegalArgumentException("非法参数"));
-                return result;
-            }
-            rawClasses = m.group(1);
-            rawFormat = m.group(2);
-        } else {
-            rawClasses = uri.replaceFirst("/", "");
-        }
-
-
-        String[] classes = rawClasses.split("/");
-        if (classes.length < 1) {
-            result.fail(new IllegalArgumentException("非法参数"));
-            return result;
-        }
-        classes[0] = classes[0].replaceFirst("all", "");
-        pathParams.put("classes", new JsonArray(Arrays.asList(classes)));
-
-        // 处理文件后缀
-
-        String format;
-        if (Arrays.asList("json", "svg", "txt", "png", "").contains(rawFormat)) {
-            format = "".equals(rawFormat) ? "json" : rawFormat;
-        } else {
-            result.fail(new IllegalArgumentException("非法参数"));
-            return result;
-        }
+        pathParams.put("categories", categories);
         pathParams.put("format", format);
-
         result.complete(pathParams);
         return result;
     }

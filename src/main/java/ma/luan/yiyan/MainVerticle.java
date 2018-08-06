@@ -29,6 +29,9 @@ public class MainVerticle extends AbstractVerticle {
             .setPort(config().getJsonObject("redis").getInteger("port",6379))
             .setSelect(config().getJsonObject("redis").getInteger("select",0));
 
+        // 配置 RuntimeError 错误记录
+        vertx.exceptionHandler(error -> log.error(error));
+
         // 顺序部署 Verticle
         Future.<Void>succeededFuture()
             .compose(v -> Future.<String>future(s -> vertx.deployVerticle(new ApiVerticle(),new DeploymentOptions().setConfig(config()), s)))
