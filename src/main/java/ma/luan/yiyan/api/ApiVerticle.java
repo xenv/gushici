@@ -12,14 +12,14 @@ import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import ma.luan.yiyan.constants.Key;
 import ma.luan.yiyan.util.ConvertUtil;
+import ma.luan.yiyan.util.JsonCollector;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Arrays;
-import java.util.stream.Collectors;
 
 public class ApiVerticle extends AbstractVerticle {
-    //private Logger log = LogManager.getLogger(this.getClass());
+    private Logger log = LogManager.getLogger(this.getClass());
 
     @Override
     public void start(Future<Void> startFuture) {
@@ -30,9 +30,9 @@ public class ApiVerticle extends AbstractVerticle {
         router.get("/favicon.ico").handler(c -> c.fail(404)); // 针对浏览器返回404
         router.get("/log").handler(this::showLog); // 显示日志
         router.routeWithRegex("/([a-z0-9/]*)\\.?(txt|json|png|svg|)")
-                .handler(this::handleGushici); // 核心API调用
+            .handler(this::handleGushici); // 核心API调用
         router.route().last().handler(c -> c.fail(404)) // 其他返回404
-                .failureHandler(this::returnError); // 对上面所有的错误进行处理
+            .failureHandler(this::returnError); // 对上面所有的错误进行处理
         vertx
             .createHttpServer()
             .requestHandler(router::accept)
@@ -53,7 +53,7 @@ public class ApiVerticle extends AbstractVerticle {
         JsonObject result = new JsonObject();
         result.put("welcome", "欢迎使用古诗词·一言");
         result.put("api-document", "下面为本API可用的所有类型，使用时，在链接最后面加上 .svg / .txt / .json / .png 可以获得不同格式的输出");
-        result.put("help", "具体安装方法请访问项目首页 https://gushi.ci");
+        result.put("help", "具体安装方法请访问项目首页 " + config().getString("index.url", "http://localhost/"));
         vertx.eventBus().<JsonArray>send(Key.GET_HELP_FROM_REDIS, null, res -> {
             if (res.succeeded()) {
                 result.put("list", res.result().body());
@@ -177,6 +177,7 @@ public class ApiVerticle extends AbstractVerticle {
 
     /**
      * 根据 uri 获取参数
+     *
      * @param routingContext example: uri: /shenghuo/buyi.png , /all
      * @return {format: "png", categories: [shenghuo, buyi]}, {format:"json", categories:[""]}
      */
@@ -186,11 +187,10 @@ public class ApiVerticle extends AbstractVerticle {
         String rawCategory = routingContext.request().getParam("param0");
         String rawFormat = routingContext.request().getParam("param1");
         // 如果是 "all" 则当没有分类处理
-        JsonArray categories = new JsonArray(
-                Arrays.stream(rawCategory.split("/"))
-                .filter(s -> !s.isEmpty())
-                .filter(s -> !"all".equals(s))
-                .collect(Collectors.toList()));
+        JsonArray categories = Arrays.stream(rawCategory.split("/"))
+            .filter(s -> !s.isEmpty())
+            .filter(s -> !"all".equals(s))
+            .collect(JsonCollector.toJsonArray());
         // 默认 json
         String format = "".equals(rawFormat) ? "json" : rawFormat;
 

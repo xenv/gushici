@@ -12,6 +12,7 @@ import io.vertx.redis.RedisClient;
 import io.vertx.redis.RedisOptions;
 import ma.luan.yiyan.constants.Key;
 import ma.luan.yiyan.util.CategoryTrie;
+import ma.luan.yiyan.util.JsonCollector;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -41,11 +42,11 @@ public class DataService extends AbstractVerticle {
         CompositeFuture.all(Arrays.asList(imgKeys, jsonKeys)).setHandler(v -> {
             if (v.succeeded()) {
                 imgKeys.result().addAll(jsonKeys.result())
-                        .stream()
-                        .forEach(key -> keysInRedis.insert((String) key));
+                    .stream()
+                    .forEach(key -> keysInRedis.insert((String) key));
                 startFuture.complete();
             } else {
-                log.error(v.cause());
+                log.error("DataService fail to start", v.cause());
                 startFuture.fail(v.cause());
             }
         });
@@ -55,21 +56,17 @@ public class DataService extends AbstractVerticle {
         redisClient.lrange(Key.REDIS_HELP_LIST, 0, -1, res -> {
             if (res.succeeded()) {
                 JsonArray array = res.result();
-                JsonArray newArray = new JsonArray(array.stream()
+                JsonArray newArray = array.stream()
                     .map(text -> {
-                        // 无力吐槽 JsonArray 的 stream 操作
-                        JsonObject result = new JsonObject();
-                        String prefix = config().getString("index.url", "http://localhost/");
-                        new JsonObject((String) text).stream()
-                            .forEach(entry -> result.put(entry.getKey(), prefix +
-                                entry.getValue().toString().replace(":", "/")));
-                        return result;
+                        String prefix = config().getString("api.url", "http://localhost/");
+                        return new JsonObject((String) text).stream()
+                            .collect(Collectors.toMap(Map.Entry::getKey,
+                                v -> prefix + v.getValue().toString().replace(":", "/")));
                     })
-                    .collect(Collectors.toList())
-                );
+                    .collect(JsonCollector.toJsonArray());
                 message.reply(newArray);
             } else {
-                log.error(res.cause());
+                log.error("Fail to get data from Redis", res.cause());
                 message.fail(500, res.cause().getMessage());
             }
         });
@@ -80,8 +77,8 @@ public class DataService extends AbstractVerticle {
      */
     private void getGushiciFromRedis(Message<JsonObject> message) {
         JsonArray realCategory = new JsonArray()
-                .add("png".equals(message.body().getString("format")) ? "img" : "json")
-                .addAll(message.body().getJsonArray("categories"));
+            .add("png".equals(message.body().getString("format")) ? "img" : "json")
+            .addAll(message.body().getJsonArray("categories"));
         checkAndGetKey(realCategory)
             .compose(key -> Future.<String>future(s -> redisClient.srandmember(key, s))) // 从 set 随机返回一个对象
             .setHandler(res -> {
@@ -103,11 +100,7 @@ public class DataService extends AbstractVerticle {
      */
     private Future<String> checkAndGetKey(JsonArray categories) {
         Future<String> result = Future.future();
-        List<String> categoryList = categories.stream()
-                .filter(String.class::isInstance)
-                .map(String.class::cast)
-                .collect(Collectors.toList());
-        List<String> toRandom = keysInRedis.getKeys(categoryList);
+        List<String> toRandom = keysInRedis.getKeys(categories);
         if (toRandom.size() >= 1) {
             result.complete(toRandom.get(random.nextInt(toRandom.size())));
         } else {
