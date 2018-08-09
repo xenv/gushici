@@ -38,12 +38,12 @@ public class LogService extends AbstractVerticle {
     private void setHistoryToRedis(Message<JsonObject> message) {
         redisClient.hincrby(Key.REDIS_CLICKS_HISTORY_HASH, LocalDate.now().toString(), 1, res -> {
             if (res.failed()) {
-                log.error(res.cause());
+                log.error("Fail to get data from Redis", res.cause());
             }
         });
         redisClient.hincrby(Key.REDIS_CLICKS_TOTAL_HASH, "total", 1, res -> {
             if (res.failed()) {
-                log.error(res.cause());
+                log.error("Fail to get data from Redis", res.cause());
             }
         });
     }

@@ -35,13 +35,15 @@ public class CategoryTrie {
      * @param categories example: [img]
      * @return [img:test:qq, img:test:aa, img:xx:aa]
      */
-    public List<String> getKeys(List<String> categories) {
+    public List<String> getKeys(Iterable categories) {
         CategoryTrie currentTrie = this;
-        if (categories == null || categories.size() == 0) {
+        if (categories == null) {
             return new ArrayList<>();
         }
-        for (String category : categories) {
-            currentTrie = currentTrie.getDict().getOrDefault(category, EMPTY_INSTANCE);
+        for (Object category : categories) {
+            if (category instanceof String) {
+                currentTrie = currentTrie.getDict().getOrDefault(category, EMPTY_INSTANCE);
+            }
         }
         return currentTrie.keys;
     }
