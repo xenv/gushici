@@ -1,9 +1,11 @@
 package ma.luan.yiyan.api;
 
+import io.netty.util.internal.StringUtil;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.eventbus.ReplyException;
 import io.vertx.core.eventbus.ReplyFailure;
+import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -134,7 +136,9 @@ public class ApiVerticle extends AbstractVerticle {
             case "svg": {
                 setCommonHeader(routingContext.response()
                     .putHeader("Content-Type", "image/svg+xml; charset=utf-8"))
-                    .end(ConvertUtil.getSvg(new JsonObject(obj).getString("content")));
+                    .end(ConvertUtil.getSvg(new JsonObject(obj).getString("content"),
+                            params.getInteger("max-width"), params.getInteger("font-size"),
+                            params.getInteger("spacing")));
                 break;
             }
             case "txt": {
@@ -195,9 +199,38 @@ public class ApiVerticle extends AbstractVerticle {
         String format = "".equals(rawFormat) ? "json" : rawFormat;
 
         JsonObject pathParams = new JsonObject();
+
+        // svg 额外配置
+        if ("svg".equals(format)) {
+            HttpServerRequest request = routingContext.request();
+            parseAndSet(pathParams,"max-width", request.getParam("max-width")
+                    , Integer.MAX_VALUE, 200, Integer.MAX_VALUE);
+            parseAndSet(pathParams,"font-size", request.getParam("font-size")
+                    , 20, 8, 50);
+            parseAndSet(pathParams,"spacing", request.getParam("spacing")
+                    , 3, 1, 5);
+        }
         pathParams.put("categories", categories);
         pathParams.put("format", format);
         result.complete(pathParams);
         return result;
+    }
+
+    private void parseAndSet(JsonObject jsonObject, String paramName,
+                             String value, int defaultValue, int minValue, int maxValue) {
+        if (value == null) {
+            jsonObject.put(paramName, defaultValue);
+        } else {
+            try {
+                Integer i = Integer.parseInt(value);
+                if (i >= minValue && i <= maxValue) {
+                    jsonObject.put(paramName, i);
+                } else {
+                    jsonObject.put(paramName, defaultValue);
+                }
+            } catch (NumberFormatException var3) {
+                jsonObject.put(paramName, defaultValue);
+            }
+        }
     }
 }

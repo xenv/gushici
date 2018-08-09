@@ -118,6 +118,13 @@
             <version>2.11.1</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-text</artifactId>
+            <version>1.4</version>
+        </dependency>
+
+
 
     </dependencies>
 
