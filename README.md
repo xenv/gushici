@@ -51,6 +51,13 @@
 
 SVG后缀是我们推荐的最优调用方案，可以在部分论坛、任何博客、小程序内无损直接调用，并且可以一定程度上控制样式。缺点是部分老旧浏览器不支持。
 
+你可以直接修改svg样式：
+```html
+<img src="https://api.gushi.ci/all.svg" 
+	style="max-width:100%; font-size:40px;">
+```
+
+
 #### JSON 调用
 
 ```html
