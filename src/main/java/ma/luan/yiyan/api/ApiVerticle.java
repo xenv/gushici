@@ -32,9 +32,9 @@ public class ApiVerticle extends AbstractVerticle {
         router.get("/favicon.ico").handler(c -> c.fail(404)); // 针对浏览器返回404
         router.get("/log").handler(this::showLog); // 显示日志
         router.routeWithRegex("/([a-z0-9/]*)\\.?(txt|json|png|svg|)")
-            .handler(this::handleGushici); // 核心API调用
+                .handler(this::handleGushici); // 核心API调用
         router.route().last().handler(c -> c.fail(404)) // 其他返回404
-            .failureHandler(this::returnError); // 对上面所有的错误进行处理
+                .failureHandler(this::returnError); // 对上面所有的错误进行处理
         vertx
             .createHttpServer()
             .requestHandler(router::accept)
@@ -228,7 +228,7 @@ public class ApiVerticle extends AbstractVerticle {
                 } else {
                     jsonObject.put(paramName, defaultValue);
                 }
-            } catch (NumberFormatException var3) {
+            } catch (NumberFormatException ex) {
                 jsonObject.put(paramName, defaultValue);
             }
         }

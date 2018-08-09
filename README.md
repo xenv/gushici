@@ -45,8 +45,22 @@
 
 #### SVG 调用
 
+标准调用
 ```html
 <img src="https://api.gushi.ci/all.svg">
+```
+
+个性化参数
+
+| 说明 | 参数名 | 默认值 | 合法范围 |
+| --- | --- | --- | --- |
+| 最大宽度（px） | max-width | ∞ | [300,∞] |
+| 字体大小（px） | font-size | 20 | [8,50] |
+| 字体间隔（比例） | spacing | 3 | [1,5] |
+
+调用示例
+```html
+<img src="https://api.gushi.ci/all.svg?max-width=500&font-size=18&spacing=4">
 ```
 
 SVG后缀是我们推荐的最优调用方案，可以在部分论坛、任何博客、小程序内无损直接调用，并且可以一定程度上控制样式。缺点是部分老旧浏览器不支持。
@@ -107,7 +121,8 @@ TXT调用和JSON调用基本一致，可以节省一些流量。或者，你甚�
 3. DataService 和 LogService 负责提供查询服务
 4. ConvertUtil 负责转码
 5. Service 没有使用 Service Proxy，因此无需额外生成代码。
-
+ 
+ 
 ### 单机压测
 
 CPU: E5 2660 8核16线程 16GB内存 JVM默认配置 Windows10系统 
@@ -117,8 +132,12 @@ Jmeter: 100线程数 每线程循环 1000次，走HTTP
 | Samples | Average | Median | 90% Line | 95% Line | 99% Line | Min | Max | Error % | Throughput/sec | Received KB/sec | Sent KB/sec |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | 1000000 | 4 | 4 | 5 | 8 | 9 | 0 | 37 | 0.00% | 20458.68 | 3622.91 | 2497.4 |
+ 
 
 ### 更新历史
+
+* 2018.08.09 1.3:
+  1. svg 调用可以控制 max-width, font-size 和 spacing
 
 * 2018.08.08 1.2:
   1. 细节优化 
