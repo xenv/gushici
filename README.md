@@ -15,6 +15,17 @@
 项目首页：[https://gushi.ci](https://gushi.ci)
 
 
+### 新版接口上线：今日诗词API
+
+本项目为开源的旧一句话诗词API，现已推出新版在线API：今日诗词 可供调用（暂不开源）。
+
+今日诗词API 可以根据不同地点、时间、节日、季节、天气、景观、城市进行智能推荐古诗词。
+
+官网： [https://www.jinrishici.com](https://www.jinrishici.com)
+
+
+
+
 ### 安装
 
 1. 根据 Maven 安装依赖
