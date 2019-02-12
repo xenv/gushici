@@ -38,8 +38,8 @@ public class DataServiceTest {
         vertx.eventBus().send(Key.GET_HELP_FROM_REDIS, null, r1 -> {
             if (r1.succeeded()) {
                 JsonArray array = (JsonArray) r1.result().body();
-                assertThat(array.getJsonObject(0)
-                        , equalTo(new JsonObject().put("全部", "https://api.gushi.ci/all")));
+                context.verify(v -> assertThat(array.getJsonObject(0)
+                        , equalTo(new JsonObject().put("全部", "https://api.gushi.ci/all"))));
                 async.complete();
             } else {
                 context.fail();
