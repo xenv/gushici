@@ -7,7 +7,7 @@ import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import ma.luan.yiyan.constants.Key;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -17,14 +17,13 @@ import static org.hamcrest.Matchers.greaterThan;
 
 @RunWith(VertxUnitRunner.class)
 public class LogServiceTest {
-    private Vertx vertx;
-    private JsonObject config;
+    private static Vertx vertx;
 
-    @Before
-    public void beforeClass(TestContext context) {
+    @BeforeClass
+    public static void  beforeClass(TestContext context) {
         Async async = context.async();
         vertx = Vertx.vertx();
-        config = new JsonObject(vertx.
+        JsonObject config = new JsonObject(vertx.
                 fileSystem().readFileBlocking("conf.json"));
         vertx.deployVerticle(new LogService(), new DeploymentOptions().setConfig(config), c -> {
             async.complete();

@@ -11,7 +11,7 @@ import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.WebClientOptions;
 import ma.luan.yiyan.MainVerticle;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -24,10 +24,10 @@ import static org.hamcrest.Matchers.*;
 
 @RunWith(VertxUnitRunner.class)
 public class ApiVerticleTest {
-    private WebClient webClient;
+    private static WebClient webClient;
 
-    @Before
-    public void beforeClass(TestContext context) {
+    @BeforeClass
+    public static void beforeClass(TestContext context) {
         Async async = context.async();
         Vertx vertx = Vertx.vertx();
         JsonObject config = new JsonObject(vertx.

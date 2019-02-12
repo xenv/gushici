@@ -8,7 +8,7 @@ import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import ma.luan.yiyan.constants.Key;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -19,10 +19,10 @@ import static org.hamcrest.Matchers.*;
 
 @RunWith(VertxUnitRunner.class)
 public class DataServiceTest {
-    private Vertx vertx;
+    private static Vertx vertx;
 
-    @Before
-    public void beforeClass(TestContext context) {
+    @BeforeClass
+    public static void beforeClass(TestContext context) {
         Async async = context.async();
         vertx = Vertx.vertx();
         JsonObject config = new JsonObject(vertx.
