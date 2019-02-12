@@ -60,7 +60,7 @@ public class LogService extends AbstractVerticle {
                 result.put("最近七天点击量", history.result());
                 message.reply(result);
             } else {
-                log.error(v.cause());
+                log.error("日志获取异常", v.cause());
                 message.fail(500, v.cause().getMessage());
             }
         });

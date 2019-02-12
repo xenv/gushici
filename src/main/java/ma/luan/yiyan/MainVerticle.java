@@ -22,7 +22,7 @@ public class MainVerticle extends AbstractVerticle {
     @Override
     public void start(Future<Void> startFuture) {
         // 配置 RuntimeError 错误记录
-        vertx.exceptionHandler(error -> log.error(error));
+        vertx.exceptionHandler(error -> log.error("未捕获的异常：", error));
 
         // 顺序部署 Verticle
         Future.<Void>succeededFuture()
