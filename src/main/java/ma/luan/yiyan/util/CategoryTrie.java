@@ -15,6 +15,7 @@ public class CategoryTrie {
      * @param categoryKey  example: img:shenghuo:buyi
      */
     public void insert(String categoryKey) {
+        if (categoryKey == null || categoryKey.length() == 0) return;
         String[] categories = categoryKey.split(":");
         CategoryTrie currentTrie = this;
         for (String current : categories) {
@@ -55,18 +56,5 @@ public class CategoryTrie {
 
     private void addKey(String key) {
         this.keys.add(key);
-    }
-
-
-    // 测试
-    public static void main(String[] args) {
-        CategoryTrie root = new CategoryTrie();
-        root.insert("img:test:qq");
-        root.insert("img:test2:qq2");
-        root.insert("img:test:qq2");
-        root.insert("json:test2:qq");
-        System.out.println(root.getKeys(Collections.singletonList("img")));
-        System.out.println(root.getKeys(Arrays.asList("img","test")));
-        System.out.println(root.getKeys(Arrays.asList("img","test2","qq2")));
     }
 }

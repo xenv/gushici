@@ -36,7 +36,7 @@ public class ApiVerticle extends AbstractVerticle {
             .failureHandler(this::returnError); // 对上面所有的错误进行处理
         vertx
             .createHttpServer()
-            .requestHandler(router::accept)
+            .requestHandler(router)
             .listen(
                 config().getInteger("http.port", 8080),
                 result -> {

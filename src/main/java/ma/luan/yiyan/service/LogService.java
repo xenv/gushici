@@ -7,8 +7,8 @@ import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.redis.RedisClient;
-import io.vertx.redis.RedisOptions;
 import ma.luan.yiyan.constants.Key;
+import ma.luan.yiyan.util.OptionsUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -19,19 +19,14 @@ import java.util.List;
 
 
 public class LogService extends AbstractVerticle {
-    private RedisOptions redisOptions;
     private RedisClient redisClient;
     private Logger log = LogManager.getLogger(this.getClass());
 
-    public LogService(RedisOptions redisOptions) {
-        this.redisOptions = redisOptions;
-    }
-
     @Override
     public void start(Future<Void> startFuture) {
-        redisClient = RedisClient.create(vertx, redisOptions);
         vertx.eventBus().consumer(Key.SET_HISTORY_TO_REDIS, this::setHistoryToRedis);
         vertx.eventBus().consumer(Key.GET_HISTORY_FROM_REDIS, this::getHistoryFromRedis);
+        redisClient = RedisClient.create(vertx, OptionsUtil.getRedisOptions(config()));
         startFuture.complete();
     }
 

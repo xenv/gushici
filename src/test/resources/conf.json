@@ -1,0 +1,11 @@
+{
+    "http.port" : 8080,
+    "api.url" : "https://api.gushi.ci/",
+    "test.host": "127.0.0.1",
+    "index.url" : "https://gushi.ci/",
+    "redis": {
+        "host": "127.0.0.1",
+        "port": 6379,
+        "select": 0
+    }
+}

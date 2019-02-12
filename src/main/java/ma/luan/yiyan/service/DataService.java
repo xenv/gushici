@@ -9,10 +9,10 @@ import io.vertx.core.eventbus.ReplyFailure;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.redis.RedisClient;
-import io.vertx.redis.RedisOptions;
 import ma.luan.yiyan.constants.Key;
 import ma.luan.yiyan.util.CategoryTrie;
 import ma.luan.yiyan.util.JsonCollector;
+import ma.luan.yiyan.util.OptionsUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -23,19 +23,15 @@ import java.util.stream.Collectors;
 public class DataService extends AbstractVerticle {
     private RedisClient redisClient;
     private Random random = new Random();
-    private RedisOptions redisOptions;
     private Logger log = LogManager.getLogger(this.getClass());
-    private static CategoryTrie keysInRedis = new CategoryTrie();
-
-    public DataService(RedisOptions redisOptions) {
-        this.redisOptions = redisOptions;
-    }
+    private CategoryTrie keysInRedis = new CategoryTrie();
 
     @Override
     public void start(Future<Void> startFuture) {
         vertx.eventBus().consumer(Key.GET_GUSHICI_FROM_REDIS, this::getGushiciFromRedis);
         vertx.eventBus().consumer(Key.GET_HELP_FROM_REDIS, this::getHelpFromRedis);
-        redisClient = RedisClient.create(vertx, redisOptions);
+        redisClient = RedisClient.create(vertx, OptionsUtil.getRedisOptions(config()));
+
         // 从 redis 缓存所有 key
         Future<JsonArray> imgKeys = Future.future(f -> redisClient.keys(Key.IMG, f));
         Future<JsonArray> jsonKeys = Future.future(f -> redisClient.keys(Key.JSON, f));
@@ -88,8 +84,9 @@ public class DataService extends AbstractVerticle {
                     if (res.cause() instanceof ReplyException) {
                         ReplyException exception = (ReplyException) res.cause();
                         message.fail(exception.failureCode(), exception.getMessage());
+                    } else {
+                        message.fail(500, res.cause().getMessage());
                     }
-                    message.fail(500, res.cause().getMessage());
                 }
             });
     }
