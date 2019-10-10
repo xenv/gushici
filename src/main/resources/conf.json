@@ -1,6 +1,6 @@
 {
     "http.port" : 8080,
-    "api.url" : "https://api.gushi.ci/",
+    "api.url" : "https://v1.jinrishici.com/",
     "index.url" : "https://gushi.ci/",
     "redis": {
         "host": "127.0.0.1",
