@@ -1,6 +1,6 @@
 ## 一言·古诗词 API
 
-<img src="https://api.gushi.ci/all.svg">
+<img src="https://v1.jinrishici.com/all.svg">
 
 ### 简介
 
@@ -42,30 +42,30 @@
 
 #### API举例
 
-* [https://api.gushi.ci/all.json](https://api.gushi.ci/all.json)
-* [https://api.gushi.ci/all.svg](https://api.gushi.ci/all.svg)
-* [https://api.gushi.ci/shuqing/libie.png](https://api.gushi.ci/shuqing/libie.png)
-* [https://api.gushi.ci/rensheng.txt](https://api.gushi.ci/rensheng.txt)
+* [https://v1.jinrishici.com/all.json](https://v1.jinrishici.com/all.json)
+* [https://v1.jinrishici.com/all.svg](https://v1.jinrishici.com/all.svg)
+* [https://v1.jinrishici.com/shuqing/libie.png](https://v1.jinrishici.com/shuqing/libie.png)
+* [https://v1.jinrishici.com/rensheng.txt](https://v1.jinrishici.com/rensheng.txt)
 
 #### API地址格式(仅支持https)
 
-`https://api.gushi.ci/{一级分类}/{二级分类(可选)}.{返回格式(可选)}`
+`https://v1.jinrishici.com/{一级分类}/{二级分类(可选)}.{返回格式(可选)}`
 
-查看所有目前支持的分类：[https://api.gushi.ci/](https://api.gushi.ci/)
+查看所有目前支持的分类：[https://v1.jinrishici.com/](https://v1.jinrishici.com/)
 
 目前支持的后缀：.svg .txt .png .json 不加后缀默认返回 json
 
 #### SVG 调用
 
 ```html
-<img src="https://api.gushi.ci/all.svg">
+<img src="https://v1.jinrishici.com/all.svg">
 ```
 
 SVG后缀是我们推荐的最优调用方案，可以在部分论坛、任何博客、小程序内无损直接调用，并且可以一定程度上控制样式。缺点是部分老旧浏览器不支持。
 
 你可以直接修改svg控制最大长度
 ```html
-<img src="https://api.gushi.ci/all.svg" style="max-width:100%;">
+<img src="https://v1.jinrishici.com/all.svg" style="max-width:100%;">
 ```
 
 或者使用我们的<b>svg专用</b>的自定义参数
@@ -78,7 +78,7 @@ SVG后缀是我们推荐的最优调用方案，可以在部分论坛、任何�
 
 调用示例
 ```html
-<img src="https://api.gushi.ci/all.svg?font-size=18&spacing=4">
+<img src="https://v1.jinrishici.com/all.svg?font-size=18&spacing=4">
 ```
 
 #### JSON 调用
@@ -86,7 +86,7 @@ SVG后缀是我们推荐的最优调用方案，可以在部分论坛、任何�
 ```html
 <script>
   var xhr = new XMLHttpRequest();
-  xhr.open('get', 'https://api.gushi.ci/all.json');
+  xhr.open('get', 'https://v1.jinrishici.com/all.json');
   xhr.onreadystatechange = function () {
     if (xhr.readyState === 4) {
       var data = JSON.parse(xhr.responseText);
@@ -103,7 +103,7 @@ JSON调用可以获取来源、作者、分类等信息，可以供你自定义�
 #### PNG 调用
 
 ```html
-<img src="https://api.gushi.ci/all.png">
+<img src="https://v1.jinrishici.com/all.png">
 ```
 
 我们会提供透明的PNG文件。PNG方法兼容性最好，可以在几乎任何地方插入。并且支持所有浏览器。缺点是不能控制样式，另外，由于流量限制，我们只会给您传送较小的图片源文件。
@@ -113,7 +113,7 @@ JSON调用可以获取来源、作者、分类等信息，可以供你自定义�
 ```html
 <script>
   var xhr = new XMLHttpRequest();
-  xhr.open('get', 'https://api.gushi.ci/all.txt');
+  xhr.open('get', 'https://v1.jinrishici.com/all.txt');
   xhr.onreadystatechange = function () {
     if (xhr.readyState === 4) {
       var gushici = document.getElementById('gushici');
@@ -127,7 +127,7 @@ JSON调用可以获取来源、作者、分类等信息，可以供你自定义�
 TXT调用和JSON调用基本一致，可以节省一些流量。或者，你甚至可以使用 iframe 来调用我们的接口
 
 #### 获取七天点击量数据
-[https://api.gushi.ci/log](https://api.gushi.ci/log)
+[https://v1.jinrishici.com/log](https://v1.jinrishici.com/log)
 
 
 ### 技术说明
