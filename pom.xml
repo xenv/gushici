@@ -10,7 +10,7 @@
 
     <properties>
         <java.version>1.8</java.version>
-        <vertx.version>3.6.3</vertx.version>
+        <vertx.version>3.9.4</vertx.version>
     </properties>
 
     <build>
